@@ -55,7 +55,6 @@ extern volatile uint16_t rxLen;
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
-void ProcessRxData(uint8_t *data, uint16_t len);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */

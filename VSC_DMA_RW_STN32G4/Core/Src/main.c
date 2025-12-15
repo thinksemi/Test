@@ -220,6 +220,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMAMUX_OVR_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMAMUX_OVR_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMAMUX_OVR_IRQn);
 
 }
 
@@ -257,6 +260,15 @@ static void MX_GPIO_Init(void)
 void ProcessRxData(uint8_t *data, uint16_t len)
 {
   HAL_UART_Transmit(&hlpuart1, data, len, HAL_MAX_DELAY); // echo
+}
+
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == LPUART1)
+  {
+    // Process first half of the buffer
+    ProcessRxData(rxDmaBuf, RX_DMA_BUF_SIZE / 2);
+  }
 }
 
 /* USER CODE END 4 */
