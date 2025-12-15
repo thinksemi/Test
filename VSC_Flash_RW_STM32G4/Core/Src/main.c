@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32g4xx_hal_uart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -43,7 +44,8 @@
 UART_HandleTypeDef hlpuart1;
 
 /* USER CODE BEGIN PV */
-
+char msg[] = "Hello from LPUSART STM32G4\r\n";
+uint8_t rxByte;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,7 +92,11 @@ int main(void)
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_IT(&hlpuart1, &rxByte, 1);
+  HAL_UART_Transmit(&hlpuart1,
+                  (uint8_t*)msg,
+                  sizeof(msg) - 1,
+                  HAL_MAX_DELAY);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -100,6 +106,14 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+    HAL_Delay(500);
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+    HAL_Delay(500);
+    //HAL_UART_Transmit(&hlpuart1,
+      //            (uint8_t*)msg,
+        //          sizeof(msg) - 1,
+          //        HAL_MAX_DELAY);
   }
   /* USER CODE END 3 */
 }
@@ -160,7 +174,7 @@ static void MX_LPUART1_UART_Init(void)
 
   /* USER CODE END LPUART1_Init 1 */
   hlpuart1.Instance = LPUART1;
-  hlpuart1.Init.BaudRate = 209700;
+  hlpuart1.Init.BaudRate = 9600;
   hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
   hlpuart1.Init.StopBits = UART_STOPBITS_1;
   hlpuart1.Init.Parity = UART_PARITY_NONE;
@@ -222,7 +236,15 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if(huart->Instance == LPUART1)
+  {
+    HAL_UART_Transmit(&hlpuart1, &rxByte, 5, HAL_MAX_DELAY);
+    //Rearm the receive interrupt
+    HAL_UART_Receive_IT(&hlpuart1, &rxByte, 5);
+  }
+}
 /* USER CODE END 4 */
 
 /**
