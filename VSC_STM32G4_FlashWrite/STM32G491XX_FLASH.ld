@@ -56,6 +56,7 @@ ENTRY(Reset_Handler)
 MEMORY
 {
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 112K
+CCMRAM (rwx) : ORIGIN = 0x10000000, LENGTH = 16K /* CCMRAM added for fast variable communication b/w cpu & RAM*/
 FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 512K
 }
 

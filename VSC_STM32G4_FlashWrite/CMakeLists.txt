@@ -66,3 +66,20 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
     # Add user defined libraries
 )
+
+# Try to find objcopy to generate .bin and .hex after building the ELF
+find_program(OBJCOPY arm-none-eabi-objcopy objcopy)
+
+if(OBJCOPY)
+    message(STATUS "objcopy: ${OBJCOPY}")
+    
+    # Post-build for firmware (application)
+    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+        COMMAND ${OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.bin
+        COMMAND ${OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.hex
+        COMMENT "Generating ${CMAKE_PROJECT_NAME}.bin and ${CMAKE_PROJECT_NAME}.hex"
+    )
+  
+else()
+    message(WARNING "arm-none-eabi-objcopy not found; .bin and .hex will not be created.")
+endif()
