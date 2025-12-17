@@ -32,7 +32,16 @@ void Bootloader_LPUART_Init(void)
 
 HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_t length)
 {
+     //erase previous data
+    Flash_Erase_App();
+    HAL_Delay(100);
+     HAL_UART_Transmit(&hlpuart1,
+                  (uint8_t *)data,
+                  length,
+                  HAL_MAX_DELAY);
     HAL_FLASH_Unlock();
+   
+  
     for (uint32_t i = 0; i < length; i += 8)
     {
         uint64_t word = *(uint64_t*)(data + i);
@@ -46,6 +55,31 @@ HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_
     return HAL_OK;
 }
 
+uint32_t GetPage(uint32_t addr)
+{
+    return (addr - FLASH_BASE_ADDR) / FLASH_PAGE_SIZE;
+}
+void Flash_Erase_App(void)
+{
+    FLASH_EraseInitTypeDef erase;
+    uint32_t pageError = 0;
+
+    uint32_t startPage = GetPage(APP_START_ADDR);
+    uint32_t totalPages = 256 - startPage;
+
+    erase.TypeErase = FLASH_TYPEERASE_PAGES;
+    erase.Page      = startPage;
+    erase.NbPages   = totalPages;
+
+    HAL_FLASH_Unlock();
+
+    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK)
+    {
+        /* Handle error */
+    }
+
+    HAL_FLASH_Lock();
+}
 void JumpToApplication(void)
 {
     uint32_t appStack = *(volatile uint32_t*)APP_START_ADDRESS;
@@ -62,7 +96,7 @@ void JumpToApplication(void)
 void Bootloader_Main(void)
 {
     uint8_t command;
-    const char msg[] = "Bootloader started\r\n";
+    char msg[] = "Bootloader started\r\n";
 
     //Bootloader_LPUART_Init();
 
@@ -70,7 +104,7 @@ void Bootloader_Main(void)
     {
         if (command == 'a')
         {
-            uint8_t buffer[10];
+            uint8_t buffer[10]={};
             uint32_t address = APP_START_ADDRESS;
             HAL_UART_Transmit(&hlpuart1,
                   (uint8_t *)msg,
@@ -81,7 +115,7 @@ void Bootloader_Main(void)
             {
                 HAL_UART_Receive(&hlpuart1, buffer, sizeof(buffer), HAL_MAX_DELAY);
                 Bootloader_WriteFlash(address, buffer, sizeof(buffer));
-                address += sizeof(buffer);
+                //address += sizeof(buffer);
             }
         }
     }
