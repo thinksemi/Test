@@ -4,6 +4,7 @@
 extern UART_HandleTypeDef hlpuart1;
 char acknowledge=1;
 
+uint8_t buffer[10]={};
 char msg1[] = "Message written\r\n";
 char msg2[] = "Message received\r\n";
 
@@ -122,7 +123,7 @@ void Bootloader_Main(void)
     {
         if (command == 'a')
         {
-            uint8_t buffer[10]={};
+            //uint8_t buffer[100]={};
             uint32_t address = APP_START_ADDRESS;
             HAL_UART_Transmit(&hlpuart1,
                   (uint8_t *)msg,
