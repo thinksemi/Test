@@ -2,6 +2,10 @@
 #include "stm32g4xx_hal.h"
 
 extern UART_HandleTypeDef hlpuart1;
+char acknowledge=1;
+
+char msg1[] = "Message written\r\n";
+char msg2[] = "Message received\r\n";
 
 void Bootloader_LPUART_Init(void)
 {
@@ -52,6 +56,19 @@ HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_
         }
     }
     HAL_FLASH_Lock();
+
+    if (__HAL_UART_GET_FLAG(&hlpuart1, UART_FLAG_ORE))
+        {
+            __HAL_UART_CLEAR_OREFLAG(&hlpuart1);
+        }
+
+     HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)msg1,
+                                 sizeof(msg1) - 1,
+                                 HAL_MAX_DELAY);
+        acknowledge=1;
+
+
     return HAL_OK;
 }
 
@@ -97,6 +114,7 @@ void Bootloader_Main(void)
 {
     uint8_t command;
     char msg[] = "Bootloader started\r\n";
+    
 
     //Bootloader_LPUART_Init();
 
@@ -113,10 +131,32 @@ void Bootloader_Main(void)
 
             while (1)
             {
+                if(acknowledge==1)
+                {
                 HAL_UART_Receive(&hlpuart1, buffer, sizeof(buffer), HAL_MAX_DELAY);
-                Bootloader_WriteFlash(address, buffer, sizeof(buffer));
+                 HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)msg2,
+                                 sizeof(msg2) - 1,
+                                 HAL_MAX_DELAY);
+                //Bootloader_WriteFlash(address, buffer, sizeof(buffer));
+                while(Bootloader_WriteFlash(address, buffer, sizeof(buffer))!=HAL_OK);
+                //acknowledge=0;
+                }
                 //address += sizeof(buffer);
-            }
+
+                // if (HAL_UART_Receive(&hlpuart1, &command, 1, 2000) == HAL_OK)
+                //     {
+                //         if (command == 'b')
+                //         {
+                            
+                           
+                //             HAL_UART_Transmit(&hlpuart1,
+                //                 (uint8_t *)msg1,
+                //                 sizeof(msg1) - 1,
+                //                 HAL_MAX_DELAY);
+                //             }
+                //         }
+                    }
         }
     }
     //JumpToApplication();

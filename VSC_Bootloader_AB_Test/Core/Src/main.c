@@ -119,11 +119,11 @@ int main(void)
 
    if(app_address==1)
    {
-       JumpToApplication(APP1_ADDR);
+       //JumpToApplication(APP1_ADDR); // correct code
    }
    else if (app_address==2)
    {
-       JumpToApplication(APP2_ADDR);
+       //JumpToApplication(APP2_ADDR); // correct code
    }
  
   /* USER CODE END 2 */
@@ -135,7 +135,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      // Bootloader_Main();
+       Bootloader_Main();
       
   }
   /* USER CODE END 3 */
