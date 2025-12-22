@@ -1,8 +1,12 @@
 #include "bootloader.h"
 #include "stm32g4xx_hal.h"
+#include <string.h>
+#include <stdlib.h>
 
 extern UART_HandleTypeDef hlpuart1;
 char acknowledge=1;
+char chunks_received=0;
+uint32_t chunk_packet_size=0x0000;
 
 char msg1[] = "Message written\r\n";
 char msg2[] = "Message received\r\n";
@@ -112,16 +116,22 @@ void Flash_Erase_App(void)
 
 void Bootloader_Main(void)
 {
-    uint8_t command;
+    //uint8_t command;
+    uint8_t command[10];
+    char rx_chunk_size[5]={0};
+    char *endptr;
     char msg[] = "Bootloader started\r\n";
     
 
     //Bootloader_LPUART_Init();
 
-    if (HAL_UART_Receive(&hlpuart1, &command, 1, 2000) == HAL_OK)
+    if (HAL_UART_Receive(&hlpuart1, command, 10, HAL_MAX_DELAY) == HAL_OK)
     {
-        if (command == 'a')
+        //if (command[0] == 'a')
+        if(memcmp(command, "start",5)==0)
         {
+            memcpy(rx_chunk_size, &command[5], 5);
+            chunk_packet_size=strtol(rx_chunk_size, &endptr, 10);
             uint8_t buffer[16]={};
             uint32_t address = APP_START_ADDRESS;
             HAL_UART_Transmit(&hlpuart1,
@@ -143,6 +153,17 @@ void Bootloader_Main(void)
                 //acknowledge=0;
                 }
                 address += sizeof(buffer);
+                chunks_received++;
+                if(chunks_received>=chunk_packet_size)
+                {
+                    //all chunks received
+                    HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)"All chunks received\r\n",
+                                 sizeof("All chunks received\r\n") - 1,
+                                 HAL_MAX_DELAY);
+                    HAL_Delay(1000);
+                    //JumpToApplication(APP_START_ADDRESS);
+                }
 
                 // if (HAL_UART_Receive(&hlpuart1, &command, 1, 2000) == HAL_OK)
                 //     {
