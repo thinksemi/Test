@@ -41,12 +41,20 @@ void Bootloader_LPUART_Init(void)
 HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_t length)
 {
      //erase previous data
-    Flash_Erase_App();
-    HAL_Delay(100);
-     HAL_UART_Transmit(&hlpuart1,
-                  (uint8_t *)data,
-                  length,
-                  HAL_MAX_DELAY);
+     if(chunks_received==0)
+     {
+        HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)"Erasing previous data...\r\n",
+                                 sizeof("Erasing previous data...\r\n") - 1,
+                                 HAL_MAX_DELAY);
+        Flash_Erase_App();
+        HAL_Delay(100);
+     }
+    
+    //  HAL_UART_Transmit(&hlpuart1,
+    //               (uint8_t *)data,
+    //               length,
+    //               HAL_MAX_DELAY);
     HAL_FLASH_Unlock();
    
   
