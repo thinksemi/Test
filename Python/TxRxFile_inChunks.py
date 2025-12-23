@@ -1,6 +1,7 @@
 import serial
 import time
 import os
+import math
 
 PORT = "COM4"        # Change to your port
 BAUDRATE = 9600
@@ -10,6 +11,8 @@ CHUNK_SIZE = 16
 # BIN_FILE = "Demo2_CMSIS.bin"
 BIN_FILE = "Test.txt"
 chunk_number = 0
+file_size=0
+Tx_chunk_length=0
 
 TEST_DATA = b"HELLO_STM32_123\r\n"
 
@@ -40,6 +43,12 @@ def TXRxFile_inChunks_test():
             print("❌ Loopback FAILED")
 
     transmit_file()
+    Tx_chunk_length= math.ceil(file_size/CHUNK_SIZE)
+    print(f"Total Chunks to transmit: {Tx_chunk_length}")
+    start_command = b'start' + str(Tx_chunk_length).zfill(5).encode() + b'\r\n'
+    print(f"Sending command: {start_command}")
+    # ser.write(start_command)
+
 
     print("Entering interactive mode. Type messages to send. Type 'Exit' to quit.")  
 
@@ -51,7 +60,8 @@ def TXRxFile_inChunks_test():
                                             if(data == b'Ready from STM32\r\n'):
                                                 print("Iam here...") 
                                                 time.sleep(0.2) 
-                                                ser.write(b"start00005")
+                                                # ser.write(b"start00002")
+                                                ser.write(bytes("start"+ str(Tx_chunk_length).zfill(5), 'utf-8'))
                                                 ser.flush()
                                                 while ser.in_waiting == 0:
                                                     pass
@@ -154,8 +164,12 @@ def transmit_file():
         print("File exists")
         print("Transmitting file...")
 
+        global file_size, Tx_chunk_length
         file_size = os.path.getsize(BIN_FILE)
-        print(f"Size of {BIN_FILE}: {file_size} bytes")  
+        print(f"Size of {BIN_FILE}: {file_size} bytes") 
+
+        # Tx_chunk_length= file_size/CHUNK_SIZE
+        # print(f"Total Chunks to transmit: {Tx_chunk_length}") 
     else:
         print("File does not exist")
     
