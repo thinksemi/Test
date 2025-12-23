@@ -2,7 +2,7 @@ import serial
 import time
 import os
 
-PORT = "COM7"        # Change to your port
+PORT = "COM4"        # Change to your port
 BAUDRATE = 9600
 TIMEOUT = 1.0        # seconds
 
