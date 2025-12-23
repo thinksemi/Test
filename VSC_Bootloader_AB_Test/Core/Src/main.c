@@ -112,6 +112,11 @@ int main(void)
   MX_GPIO_Init();
   MX_LPUART1_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)"Ready from STM32\r\n",
+                                 sizeof("Ready from STM32\r\n") - 1,
+                                 HAL_MAX_DELAY);
   //Bootloader_Main();
    SetActiveApp(1);
    app_address=GetActiveApp();

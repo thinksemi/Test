@@ -10,6 +10,8 @@ uint32_t chunk_packet_size=0x0000;
 
 char msg1[] = "Message written\r\n";
 char msg2[] = "Message received\r\n";
+char msg_Boot[] = "Boot\r\n";
+char msg_Exit[] = "Exit\r\n";
 
 void Bootloader_LPUART_Init(void)
 {
@@ -41,15 +43,15 @@ void Bootloader_LPUART_Init(void)
 HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_t length)
 {
      //erase previous data
-     if(chunks_received==0)
-     {
-        HAL_UART_Transmit(&hlpuart1,
-                                 (uint8_t *)"Erasing previous data...\r\n",
-                                 sizeof("Erasing previous data...\r\n") - 1,
-                                 HAL_MAX_DELAY);
-        Flash_Erase_App();
-        HAL_Delay(100);
-     }
+    //  if(chunks_received==0)
+    //  {
+    //     HAL_UART_Transmit(&hlpuart1,
+    //                              (uint8_t *)"Erasing previous data...\r\n",
+    //                              sizeof("Erasing previous data...\r\n") - 1,
+    //                              HAL_MAX_DELAY);
+    //     Flash_Erase_App();
+    //     HAL_Delay(100);
+    //  }
     
     //  HAL_UART_Transmit(&hlpuart1,
     //               (uint8_t *)data,
@@ -74,9 +76,14 @@ HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_
             __HAL_UART_CLEAR_OREFLAG(&hlpuart1);
         }
 
-     HAL_UART_Transmit(&hlpuart1,
-                                 (uint8_t *)msg1,
-                                 sizeof(msg1) - 1,
+    //  HAL_UART_Transmit(&hlpuart1,
+    //                              (uint8_t *)msg1,
+    //                              sizeof(msg1) - 1,
+    //                              HAL_MAX_DELAY);
+        // Transmit next Boot message
+        HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)msg_Boot,
+                                 sizeof(msg_Boot) - 1,
                                  HAL_MAX_DELAY);
         acknowledge=1;
 
@@ -142,10 +149,22 @@ void Bootloader_Main(void)
             chunk_packet_size=strtol(rx_chunk_size, &endptr, 10);
             uint8_t buffer[16]={};
             uint32_t address = APP_START_ADDRESS;
+//*****************************  Erasing flash *******************/
+             if(chunks_received==0)
+                {
+                    HAL_UART_Transmit(&hlpuart1,
+                                            (uint8_t *)"Erasing previous data...\r\n",
+                                            sizeof("Erasing previous data...\r\n") - 1,
+                                            HAL_MAX_DELAY);
+                    Flash_Erase_App();
+                    HAL_Delay(100);
+                }
+                //***************************** END  Erasing flash ****************/
             HAL_UART_Transmit(&hlpuart1,
-                  (uint8_t *)msg,
-                  sizeof(msg) - 1,
+                  (uint8_t *)msg_Boot,
+                  sizeof(msg_Boot) - 1,
                   HAL_MAX_DELAY);
+                 
 
             while (1)
             {
@@ -156,10 +175,22 @@ void Bootloader_Main(void)
                                  (uint8_t *)msg2,
                                  sizeof(msg2) - 1,
                                  HAL_MAX_DELAY);
+                                 HAL_Delay(500);
+                    // while(1)
+                    // {
+                    //     HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+                    //     HAL_Delay(500);
+                    // }
                 //Bootloader_WriteFlash(address, buffer, sizeof(buffer));
                 while(Bootloader_WriteFlash(address, buffer, sizeof(buffer))!=HAL_OK);
+                //  while(1)
+                //     {
+                //         HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+                //         HAL_Delay(500);
+                //     }
                 //acknowledge=0;
                 }
+                
                 address += sizeof(buffer);
                 chunks_received++;
                 if(chunks_received>=chunk_packet_size)
@@ -169,6 +200,11 @@ void Bootloader_Main(void)
                                  (uint8_t *)"All chunks received\r\n",
                                  sizeof("All chunks received\r\n") - 1,
                                  HAL_MAX_DELAY);
+                    // Message exit bootloader
+                    // HAL_UART_Transmit(&hlpuart1,
+                    //              (uint8_t *)msg_Exit,
+                    //              sizeof(msg_Exit) - 1,
+                    //              HAL_MAX_DELAY);
                     HAL_Delay(1000);
                     //JumpToApplication(APP_START_ADDRESS);
                 }
