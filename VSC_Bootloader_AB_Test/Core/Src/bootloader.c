@@ -147,7 +147,7 @@ void Bootloader_Main(void)
         {
             memcpy(rx_chunk_size, &command[5], 5);
             chunk_packet_size=strtol(rx_chunk_size, &endptr, 10);
-            uint8_t buffer[16]={};
+            uint8_t buffer[256]={};
             uint32_t address = APP_START_ADDRESS;
 //*****************************  Erasing flash *******************/
              if(chunks_received==0)
