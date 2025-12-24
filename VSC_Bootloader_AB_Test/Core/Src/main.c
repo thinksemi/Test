@@ -44,6 +44,7 @@ typedef void (*pFunction)(void);
 #define BOOTLOADER_ADDR   0x08000000
 #define APP1_ADDR         0x08008000
 #define APP2_ADDR         0x08028000
+#define APP3_ADDR         0x08007000
 #define BOOT_FLAG_ADDR    0x0807F800   // last page
 
 #define BOOT_MAGIC 0xB007B007
@@ -118,23 +119,25 @@ int main(void)
                                  sizeof("Ready from STM32\r\n") - 1,
                                  HAL_MAX_DELAY);
   //Bootloader_Main();
-   SetActiveApp(1);
+   SetActiveApp(2);
    app_address=GetActiveApp();
-   //JumpToApplication(APP1_ADDR);
+  //  JumpToApplication(APP2_ADDR);
+    // JumpToApplication(APP3_ADDR);
 
    if(app_address==1)
    {
-       //JumpToApplication(APP1_ADDR); // correct code
+       JumpToApplication(APP1_ADDR); // correct code
    }
    else if (app_address==2)
    {
-       //JumpToApplication(APP2_ADDR); // correct code
+       JumpToApplication(APP2_ADDR); // correct code
    }
  
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  //  Bootloader_Main();
   while (1)
   {
     /* USER CODE END WHILE */

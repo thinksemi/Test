@@ -8,7 +8,8 @@ BAUDRATE = 9600
 TIMEOUT = 1.0        # seconds
 
 CHUNK_SIZE = 16
-BIN_FILE = "Demo2_CMSIS.bin"
+# BIN_FILE = "Demo2_CMSIS.bin"
+BIN_FILE = "TestV1_Blink.bin"
 # BIN_FILE = "Test.txt"
 chunk_number = 0
 file_size=0
@@ -137,7 +138,9 @@ def TXRxFile_inChunks_test():
                             # ser.reset_input_buffer()
                             # ser.reset_output_buffer()
                             chunk = f.read(CHUNK_SIZE)
-                            if(len(chunk)<16): #if(chunk_number>=Tx_chunk_length and len(chunk)<16):
+                            chunk_number += 1
+                            # if(len(chunk)<16): 
+                            if(chunk_number>=Tx_chunk_length and len(chunk)<16):
                                 print("Chunk is appending...")
                                 print(len(chunk))
                                 chunk = bytearray(chunk)
@@ -149,7 +152,7 @@ def TXRxFile_inChunks_test():
                             ser.write(chunk)
                             time.sleep(1)  # small delay to avoid overwhelming the receiver
                             print(f"Sent chunk {chunk_number} -> {len(chunk)} bytes")
-                            chunk_number += 1
+                            # chunk_number += 1
                             # ser.reset_input_buffer()
                             # ser.reset_output_buffer()
                         elif(data == b'Exit\r\n'):

@@ -5,7 +5,7 @@
 
 extern UART_HandleTypeDef hlpuart1;
 char acknowledge=1;
-char chunks_received=0;
+uint16_t chunks_received=0;
 uint32_t chunk_packet_size=0x0000;
 
 char msg1[] = "Message written\r\n";
@@ -206,7 +206,7 @@ void Bootloader_Main(void)
                     //              sizeof(msg_Exit) - 1,
                     //              HAL_MAX_DELAY);
                     HAL_Delay(1000);
-                    //JumpToApplication(APP_START_ADDRESS);
+                    JumpToApplication(APP_START_ADDRESS);
                 }
 
                 // if (HAL_UART_Receive(&hlpuart1, &command, 1, 2000) == HAL_OK)
