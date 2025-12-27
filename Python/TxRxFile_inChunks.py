@@ -9,8 +9,9 @@ TIMEOUT = 1.0        # seconds
 
 CHUNK_SIZE = 16
 # BIN_FILE = "Demo2_CMSIS.bin"
-BIN_FILE = "TestV1_Blink.bin"
+# BIN_FILE = "TestV1_Blink.bin"
 # BIN_FILE = "Test.txt"
+BIN_FILE = "Digital_signature/signed_app.bin"  # Digitally signed binary file
 chunk_number = 0
 file_size=0
 Tx_chunk_length=0

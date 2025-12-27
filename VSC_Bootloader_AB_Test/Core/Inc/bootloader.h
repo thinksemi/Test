@@ -6,9 +6,15 @@
 // #define APP_START_ADDRESS 0x08007000UL
 
 // #define APP_START_ADDR   0x08007000UL
+
 #define APP_START_ADDRESS 0x08028000UL
 
 #define APP_START_ADDR   0x08028000UL
+
+// #define APP_START_ADDRESS 0x08028068UL
+
+// #define APP_START_ADDR   0x08028068UL
+
 #define FLASH_PAGE_SIZE  0x800U        // 2 KB
 #define FLASH_BASE_ADDR  0x08000000U
 
@@ -18,5 +24,6 @@ HAL_StatusTypeDef Bootloader_WriteFlash(uint32_t address, uint8_t *data, uint32_
 void JumpToApplication(uint32_t appAddr);
 void Flash_Erase_App(void);
 uint32_t GetPage(uint32_t addr);
+extern void check_headers(void);
 
 #endif

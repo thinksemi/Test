@@ -22,6 +22,11 @@
 #include "stm32g4xx_hal_uart.h"
 #include <stdio.h>
 #include <unistd.h>
+#include "mbedtls/sha256.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/ecdsa.h"
+#include "mbedtls/bignum.h"
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -30,12 +35,30 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+//////////////secure boot header definition//////////////
+typedef struct
+{
+    uint32_t magic;          // 0xDEADBEEF
+    uint32_t fw_size;
+    // uint32_t fw_version;
+    uint8_t  hash[32];       // SHA-256
+    uint8_t  signature[64];  // ECDSA
+    uint8_t  reserved[24];   // Padding / future use
+} fw_header_t;
+
+
+//////////////END secure boot header definition//////////////
+
 typedef struct {
     uint32_t magic;
     uint32_t active_app;  // 1 or 2
 } boot_flag_t;
 
 typedef void (*pFunction)(void);
+
+int ecdsa_verify_signature(uint8_t *hash, uint8_t *signature);
+
+
 
 /* USER CODE END PTD */
 
@@ -47,11 +70,18 @@ typedef void (*pFunction)(void);
 #define APP3_ADDR         0x08007000
 #define BOOT_FLAG_ADDR    0x0807F800   // last page
 
+#define APPT_ADDR         0x08028080  // application start after header
+
 #define BOOT_MAGIC 0xB007B007
+
+#define PUB_KEY_LEN 65
+#define MAX_APP_SIZE 0x00020000U
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+__attribute__((section(".rodata"))) 
+const uint8_t public_key[PUB_KEY_LEN] = {0x04,0Xe4,0Xd2,0X33,0Xc9,0X11,0X1d,0X4d,0X1d,0Xa6,0X5f,0X93,0X2f,0X9b,0X21,0X11,0Xc1,0X3a,0X51,0Xdb,0X81,0X96,0X6d,0X38,0Xc0,0Xfa,0Xcc,0X81,0X91,0Xa5,0X9a,0X50,0X03,0X41,0Xac,0X7b,0Xe9,0X22,0X21,0X1f,0X54,0X86,0X46,0X4f,0X93,0Xef,0Xa1,0X35,0X33,0X11,0X56,0X14,0X19,0Xb6,0Xd9,0X1f,0X27,0Xd8,0Xeb,0Xf2,0X16,0X84,0X03,0X72,0Xc8};
 
 /* USER CODE END PM */
 
@@ -118,7 +148,11 @@ int main(void)
                                  (uint8_t *)"Ready from STM32\r\n",
                                  sizeof("Ready from STM32\r\n") - 1,
                                  HAL_MAX_DELAY);
-  //Bootloader_Main();
+  
+                                 
+  // JumpToApplication(APPT_ADDR);
+  Bootloader_Main();
+  // check_headers();
    SetActiveApp(2);
    app_address=GetActiveApp();
   //  JumpToApplication(APP2_ADDR);
@@ -138,12 +172,13 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //  Bootloader_Main();
+  // check_headers();
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-       Bootloader_Main();
+      //  Bootloader_Main();
       
   }
   /* USER CODE END 3 */
@@ -332,6 +367,142 @@ void JumpToApplication(uint32_t appAddr)
     Jump();  // never returns
 }
 
+void check_headers (void)
+{
+  // fw_header_t *hdr = (fw_header_t *)0x08008000;
+    fw_header_t *hdr = (fw_header_t *) 0x08028000;
+
+    HAL_UART_Transmit(&hlpuart1,
+                                 (uint8_t *)"Entered Check headers\r\n",
+                                 sizeof("Entered Check headers\r\n") - 1,
+                                 HAL_MAX_DELAY);
+
+
+  /* Temporary buffer for computed hash */
+  static unsigned char calc_hash[32];
+
+  if (hdr->magic != 0xDEADBEEF) {
+    Error_Handler();
+  }
+
+  if (hdr->fw_size > MAX_APP_SIZE) {
+    Error_Handler();
+  }
+
+  /* Compute SHA-256 over the application image */
+  if (mbedtls_sha256((const unsigned char *)0x08028080,
+             hdr->fw_size,
+             calc_hash,
+             0) != 0) {
+    Error_Handler();
+  }
+
+  if (memcmp(calc_hash, hdr->hash, 32) != 0) {
+    Error_Handler();
+  }
+
+  /* Verify ECDSA signature (raw r||s 64 bytes) against the public key (uncompressed 0x04||X||Y)
+     Uses curve secp256r1. */
+  // {
+  //   int ret = 0;
+  //   mbedtls_ecp_group grp;
+  //   mbedtls_ecp_point Q;
+  //   mbedtls_mpi r, s;
+
+  //   mbedtls_ecp_group_init(&grp);
+  //   mbedtls_ecp_point_init(&Q);
+  //   mbedtls_mpi_init(&r);
+  //   mbedtls_mpi_init(&s);
+
+  //   if ((ret = mbedtls_ecp_group_load(&grp, MBEDTLS_ECP_DP_SECP256R1)) != 0) {
+  //     Error_Handler();
+  //   }
+
+  //   if ((ret = mbedtls_ecp_point_read_binary(&grp, &Q, public_key, PUB_KEY_LEN)) != 0) {
+  //     Error_Handler();
+  //   }
+
+  //   if ((ret = mbedtls_mpi_read_binary(&r, hdr->signature, 32)) != 0) {
+  //     Error_Handler();
+  //   }
+  //   if ((ret = mbedtls_mpi_read_binary(&s, hdr->signature + 32, 32)) != 0) {
+  //     Error_Handler();
+  //   }
+
+  //   ret = mbedtls_ecdsa_verify(&grp, hdr->hash, 32, &Q, &r, &s);
+
+  //   mbedtls_mpi_free(&r);
+  //   mbedtls_mpi_free(&s);
+  //   mbedtls_ecp_point_free(&Q);
+  //   mbedtls_ecp_group_free(&grp);
+
+  //   if (ret != 0) {
+  //     Error_Handler();
+  //   }
+  // }
+
+  if (ecdsa_verify_signature(hdr->hash, hdr->signature) != 0)
+  {
+      Error_Handler();   // Not signed by us
+  }
+
+  /* All checks passed — jump to application image */
+  // JumpToApplication(APP2_ADDR + sizeof(fw_header_t));
+  JumpToApplication(APPT_ADDR);
+
+}
+
+int ecdsa_verify_signature(uint8_t *hash, uint8_t *signature)
+{
+    int ret;
+    mbedtls_ecp_group grp;
+    mbedtls_ecp_point Q;
+    mbedtls_mpi r, s;
+
+    mbedtls_ecp_group_init(&grp);
+    mbedtls_ecp_point_init(&Q);
+    mbedtls_mpi_init(&r);
+    mbedtls_mpi_init(&s);
+
+    /* Load P-256 curve */
+    ret = mbedtls_ecp_group_load(&grp, MBEDTLS_ECP_DP_SECP256R1);
+    if (ret != 0) goto cleanup;
+
+    /* Load public key (65 bytes uncompressed) */
+    ret = mbedtls_ecp_point_read_binary(
+        &grp,
+        &Q,
+        public_key,
+        65
+    );
+    if (ret != 0) goto cleanup;
+
+    /* r = signature[0..31] */
+    ret = mbedtls_mpi_read_binary(&r, signature, 32);
+    if (ret != 0) goto cleanup;
+
+    /* s = signature[32..63] */
+    ret = mbedtls_mpi_read_binary(&s, signature + 32, 32);
+    if (ret != 0) goto cleanup;
+
+    /* Verify */
+    ret = mbedtls_ecdsa_verify(
+        &grp,
+        hash,
+        32,
+        &Q,
+        &r,
+        &s
+    );
+
+cleanup:
+    mbedtls_ecp_group_free(&grp);
+    mbedtls_ecp_point_free(&Q);
+    mbedtls_mpi_free(&r);
+    mbedtls_mpi_free(&s);
+
+    return ret;   // 0 = VALID, non-zero = FAIL
+}
 
 /* USER CODE END 4 */
 

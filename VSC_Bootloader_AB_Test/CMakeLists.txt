@@ -42,6 +42,23 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+set(MBEDTLS_SOURCES
+    Middlewares/mbedtls/library/sha256.c
+    Middlewares/mbedtls/library/ecdsa.c
+    Middlewares/mbedtls/library/ecp.c
+    Middlewares/mbedtls/library/ecp_curves.c
+    Middlewares/mbedtls/library/bignum.c
+    Middlewares/mbedtls/library/bignum_core.c
+    Middlewares/mbedtls/library/asn1parse.c
+    Middlewares/mbedtls/library/asn1write.c
+    Middlewares/mbedtls/library/platform_util.c
+    Middlewares/mbedtls/library/platform.c
+    Middlewares/mbedtls/library/constant_time.c
+)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MBEDTLS_SOURCES})
+
+
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
@@ -52,6 +69,23 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
 )
+
+# Add mbedTLS sources and include paths (Middlewares/)
+file(GLOB MBEDTLS_SRCS "${CMAKE_SOURCE_DIR}/Middlewares/library/*.c")
+if(MBEDTLS_SRCS)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE ${MBEDTLS_SRCS})
+endif()
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/Middlewares/mbedtls/include
+    ${CMAKE_SOURCE_DIR}/Middlewares/mbedtls/include/mbedtls
+    ${CMAKE_SOURCE_DIR}/Middlewares/mbedtls/library
+)
+
+# target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+#     Middlewares/mbedtls/include
+# )
+
+
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE

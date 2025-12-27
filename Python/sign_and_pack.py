@@ -10,6 +10,7 @@ PRIVATE_KEY_PEM = "Digital_Signature/private.pem"
 OUT_BIN = "Digital_Signature/signed_app.bin"
 
 MAGIC = 0xDEADBEEF
+RESERVED_SIZE = 24
 # ---------------------------------------
 
 # 1️⃣ Read app.bin
@@ -32,9 +33,14 @@ with open(PRIVATE_KEY_PEM, "rb") as f:
     )
 
 # 4️⃣ Sign hash (ECDSA P-256)
+# signature_der = private_key.sign(
+#     hash_bytes,
+#     ec.ECDSA(hashes.SHA256())
+# )
+from cryptography.hazmat.primitives.asymmetric import utils
 signature_der = private_key.sign(
     hash_bytes,
-    ec.ECDSA(hashes.SHA256())
+    ec.ECDSA(utils.Prehashed(hashes.SHA256()))
 )
 
 # Convert DER signature → raw (r || s)
@@ -44,12 +50,15 @@ signature_raw = r.to_bytes(32, "big") + s.to_bytes(32, "big")
 
 print("[+] Signature created")
 
+reserved = bytes([0x00] * RESERVED_SIZE)
+
 # 5️⃣ Build header (little-endian)
 header = (
     struct.pack("<I", MAGIC) +
     struct.pack("<I", app_size) +
     hash_bytes +
-    signature_raw
+    signature_raw +
+    reserved
 )
 
 print(f"[+] Header size: {len(header)} bytes")

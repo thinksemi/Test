@@ -206,7 +206,9 @@ void Bootloader_Main(void)
                     //              sizeof(msg_Exit) - 1,
                     //              HAL_MAX_DELAY);
                     HAL_Delay(1000);
-                    JumpToApplication(APP_START_ADDRESS);
+                    // JumpToApplication(APP_START_ADDRESS);
+                    check_headers(); // for secure boot
+                    break;
                 }
 
                 // if (HAL_UART_Receive(&hlpuart1, &command, 1, 2000) == HAL_OK)
