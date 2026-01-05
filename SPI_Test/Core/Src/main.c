@@ -112,8 +112,9 @@ static void SX1262_SetStandby(uint8_t mode)
 
 uint8_t SX1262_ReadRegister(uint16_t address)
 {
-    uint8_t txBuf[5];
-    uint8_t rxBuf[5];
+    SX1262_SetStandby(SX126X_STANDBY_RC);
+    static uint8_t txBuf[5];
+    static uint8_t rxBuf[5];
 
     txBuf[0] = SX126X_CMD_READ_REGISTER;
     txBuf[1] = (address >> 8) & 0xFF;
@@ -139,8 +140,8 @@ uint8_t SX1262_ReadRegister(uint16_t address)
 
 uint8_t SX1262_GetStatus(void)
 {
-    uint8_t tx[2] = { 0xC0, 0x00 };
-    uint8_t rx[2];
+    uint8_t tx[3] = { 0x1D,0xC0, 0x00 };
+    uint8_t rx[3];
 
     SX1262_WaitWhileBusy();
     HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
@@ -152,7 +153,7 @@ uint8_t SX1262_GetStatus(void)
     HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
     SX1262_WaitWhileBusy();
 
-    return rx[1];
+    return rx[2];
 }
 
 /* USER CODE END 0 */
@@ -239,45 +240,14 @@ uint8_t addr_lo = address & 0xFF;         // 0xE7
       SX1262_SetStandby(SX126X_STANDBY_RC);
       uint8_t status = SX1262_GetStatus();
 
-
       printf("SX1262 status = 0x%02X\r\n", status);
-
-        // if (((status >> 4) & 0x0F) != 0x2)
-        // {
-        //     Error_Handler();   // Command failed
-        // }
-
-        // if ((status & 0x0F) != 0x1)
-        // {
-        //     Error_Handler();   // Not in Standby_RC
-        // }
-      SX1262_WaitWhileBusy();
-      
-      // uint8_t txBuf[4];
-      // uint8_t rxBuf[4];
-
-      // // txBuf[0] = 0x03;        // READ
-      // txBuf[0] = SX126X_CMD_READ_REGISTER;
-      // txBuf[1] = addr_hi;        // Address MSB
-      // txBuf[2] = addr_lo;        // Address LSB
-      // txBuf[3] = 0xFF;        // Dummy
-
-      // HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_RESET);
-
-      // // HAL_SPI_TransmitReceive(&hspi2, txBuf, rxBuf, 4, HAL_MAX_DELAY);
-      // if(HAL_SPI_TransmitReceive(&hspi2, txBuf, rxBuf, 4, HAL_MAX_DELAY) != HAL_OK)
-      //   {
-      //       Error_Handler();
-      //   }
-
-      // HAL_GPIO_WritePin(NSS_GPIO_Port, NSS_Pin, GPIO_PIN_SET);
-      // /* rxBuf[3] contains data */
-
-      uint8_t val = SX1262_ReadRegister(address);
-      SX1262_WaitWhileBusy();
+       
+      // SX1262_WaitWhileBusy();
+      SX1262_ReadRegister(0x06BC);
+      // SX1262_WaitWhileBusy();
 
       SX1262_ReadRegister(0x06BD);
-      SX1262_WaitWhileBusy();
+      // SX1262_WaitWhileBusy();
 
 
       /* ..... Perform your action ..... */
@@ -358,7 +328,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
